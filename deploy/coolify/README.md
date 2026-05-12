@@ -25,6 +25,8 @@ CRAWL4AI_HOOKS_ENABLED=false
 CRAWL4AI_MAX_PAGES=20
 ```
 
+This WSL Coolify installation runs the proxy separately from application containers. The compose file includes a small `crawl4ai-host-bridge` service that publishes host port `11235` and forwards traffic to the internal Crawl4AI service.
+
 If LiteLLM is in the same Coolify private network, prefer the internal service URL:
 
 ```env

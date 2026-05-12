@@ -10,8 +10,6 @@ services:
     user: appuser
     expose:
       - "11235"
-    ports:
-      - "${CRAWL4AI_HOST_PORT:-11235}:11235"
     environment:
       PYTHON_ENV: production
       LLM_PROVIDER: ${LLM_PROVIDER:-openai/gpt-4o-mini}
@@ -48,6 +46,16 @@ services:
           memory: 4G
         reservations:
           memory: 1G
+
+  crawl4ai-host-bridge:
+    image: alpine/socat:latest
+    restart: unless-stopped
+    depends_on:
+      crawl4ai:
+        condition: service_healthy
+    command: ["-d", "-d", "TCP-LISTEN:11235,fork,reuseaddr", "TCP:crawl4ai:11235"]
+    ports:
+      - "${CRAWL4AI_HOST_PORT:-11235}:11235"
 
 volumes:
   crawl4ai-cache:
