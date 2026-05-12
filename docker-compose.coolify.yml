@@ -1,0 +1,51 @@
+services:
+  crawl4ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_TYPE: ${INSTALL_TYPE:-default}
+        ENABLE_GPU: ${ENABLE_GPU:-false}
+    restart: unless-stopped
+    user: appuser
+    expose:
+      - "11235"
+    environment:
+      PYTHON_ENV: production
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai/gpt-4o-mini}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://litellm.nanlab.xyz/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0}
+      REDIS_TASK_TTL: ${REDIS_TASK_TTL:-3600}
+      CRAWL4AI_HOOKS_ENABLED: ${CRAWL4AI_HOOKS_ENABLED:-false}
+      CRAWL4AI_SECURITY_ENABLED: ${CRAWL4AI_SECURITY_ENABLED:-false}
+      CRAWL4AI_JWT_ENABLED: ${CRAWL4AI_JWT_ENABLED:-false}
+      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:-}
+      CRAWL4AI_TRUSTED_HOSTS: ${CRAWL4AI_TRUSTED_HOSTS:-*}
+      CRAWL4AI_RATE_LIMIT: ${CRAWL4AI_RATE_LIMIT:-1000/minute}
+      CRAWL4AI_RATE_LIMIT_STORAGE_URI: ${CRAWL4AI_RATE_LIMIT_STORAGE_URI:-memory://}
+      CRAWL4AI_MAX_PAGES: ${CRAWL4AI_MAX_PAGES:-20}
+    volumes:
+      - crawl4ai-cache:/home/appuser/.cache
+    shm_size: 1gb
+    stop_grace_period: 30s
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11235/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+
+volumes:
+  crawl4ai-cache:

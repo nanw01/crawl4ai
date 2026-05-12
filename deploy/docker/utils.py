@@ -139,6 +139,56 @@ def load_config() -> Dict:
         config["llm"]["api_key"] = llm_api_key
         logging.info("LLM API key loaded from LLM_API_KEY environment variable")
 
+    def _env_bool(name: str) -> Optional[bool]:
+        value = os.environ.get(name)
+        if value is None:
+            return None
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+
+    def _env_int(name: str) -> Optional[int]:
+        value = os.environ.get(name)
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except ValueError:
+            logging.warning(f"Invalid integer value for {name}: {value}")
+            return None
+
+    security_enabled = _env_bool("CRAWL4AI_SECURITY_ENABLED")
+    if security_enabled is not None:
+        config["security"]["enabled"] = security_enabled
+
+    jwt_enabled = _env_bool("CRAWL4AI_JWT_ENABLED")
+    if jwt_enabled is not None:
+        config["security"]["jwt_enabled"] = jwt_enabled
+
+    https_redirect = _env_bool("CRAWL4AI_HTTPS_REDIRECT")
+    if https_redirect is not None:
+        config["security"]["https_redirect"] = https_redirect
+
+    api_token = os.environ.get("CRAWL4AI_API_TOKEN")
+    if api_token:
+        config["security"]["api_token"] = api_token
+
+    trusted_hosts = os.environ.get("CRAWL4AI_TRUSTED_HOSTS")
+    if trusted_hosts:
+        config["security"]["trusted_hosts"] = [
+            host.strip() for host in trusted_hosts.split(",") if host.strip()
+        ]
+
+    rate_limit = os.environ.get("CRAWL4AI_RATE_LIMIT")
+    if rate_limit:
+        config["rate_limiting"]["default_limit"] = rate_limit
+
+    rate_limit_storage_uri = os.environ.get("CRAWL4AI_RATE_LIMIT_STORAGE_URI")
+    if rate_limit_storage_uri:
+        config["rate_limiting"]["storage_uri"] = rate_limit_storage_uri
+
+    max_pages = _env_int("CRAWL4AI_MAX_PAGES")
+    if max_pages is not None:
+        config["crawler"]["pool"]["max_pages"] = max_pages
+
     # Override Redis task TTL from environment if set
     redis_task_ttl = os.environ.get("REDIS_TASK_TTL")
     if redis_task_ttl:

@@ -4,18 +4,15 @@ version: '3.8'
 x-base-config: &base-config
   ports:
     - "11235:11235"  # Gunicorn port
-  env_file:
-    - .llm.env       # API keys (create from .llm.env.example)
-  # Uncomment to set default environment variables (will overwrite .llm.env)
-  # environment:
-  #   - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-  #   - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
-  #   - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-  #   - GROQ_API_KEY=${GROQ_API_KEY:-}
-  #   - TOGETHER_API_KEY=${TOGETHER_API_KEY:-}
-  #   - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
-  #   - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-  #   - LLM_PROVIDER=${LLM_PROVIDER:-}  # Optional: Override default provider (e.g., "anthropic/claude-3-opus")
+  environment:
+    # Route LLM calls through LiteLLM/OpenAI-compatible gateways.
+    - LLM_PROVIDER=${LLM_PROVIDER:-openai/gpt-4o-mini}
+    - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+    - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    - LLM_API_KEY=${LLM_API_KEY:-}
+    - LLM_TEMPERATURE=${LLM_TEMPERATURE:-}
+    - REDIS_TASK_TTL=${REDIS_TASK_TTL:-3600}
+    - CRAWL4AI_HOOKS_ENABLED=${CRAWL4AI_HOOKS_ENABLED:-false}
   volumes:
     - /dev/shm:/dev/shm  # Chromium performance
   deploy:
