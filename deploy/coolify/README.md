@@ -15,9 +15,9 @@ Use this setup when Crawl4AI is deployed behind Coolify and LLM traffic should g
 Set these in Coolify, not in the repository:
 
 ```env
-OPENAI_BASE_URL=https://litellm.nanlab.xyz/v1
+OPENAI_BASE_URL=http://host.docker.internal:14000/v1
 OPENAI_API_KEY=sk-your-litellm-key
-LLM_PROVIDER=openai/your-litellm-model-name
+LLM_PROVIDER=openai/aiclient-gemini-2-5-flash
 LLM_TEMPERATURE=0
 REDIS_TASK_TTL=3600
 CRAWL4AI_HOST_PORT=11235
@@ -26,6 +26,30 @@ CRAWL4AI_MAX_PAGES=20
 ```
 
 This WSL Coolify installation runs the proxy separately from application containers. The compose file includes a small `crawl4ai-host-bridge` service that publishes host port `11235` and forwards traffic to the internal Crawl4AI service.
+
+Use the local LiteLLM bridge instead of `https://litellm.nanlab.xyz/v1` from Crawl4AI containers. The public domain can be blocked by Cloudflare for container-originated traffic, while `http://host.docker.internal:14000/v1` stays inside the WSL host.
+
+The WSL host bridge can be managed with systemd:
+
+```bash
+sudo tee /etc/systemd/system/litellm-bridge.service >/dev/null <<'EOF'
+[Unit]
+Description=Bridge LiteLLM from WSL host to local containerd network
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/socat -d -d TCP4-LISTEN:14000,fork,reuseaddr,bind=0.0.0.0 TCP4:10.0.3.2:4000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable --now litellm-bridge.service
+```
 
 If LiteLLM is in the same Coolify private network, prefer the internal service URL:
 
